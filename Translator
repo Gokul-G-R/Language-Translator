@@ -1,0 +1,127 @@
+from tkinter import *
+from tkinter import ttk, messagebox
+import textblob
+from gtts import gTTS
+import os
+import speech_recognition as sr
+
+class TranslatorApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.geometry("800x700")
+        self.root.title("Language Translator")
+
+        self.languages = {
+            'English': 'en',
+            'Hindi': 'hi',
+            'Bengali': 'bn',
+            'Tamil': 'ta',
+            'Telugu': 'te',
+            'Marathi': 'mr',
+            'Urdu': 'ur',
+            'Gujarati': 'gu',
+            'Kannada': 'kn',
+            'Odia': 'or',
+            'Punjabi': 'pa',
+            'Malayalam': 'ml',
+            'Sanskrit': 'sa',
+            'Assamese': 'as',
+            'Nepali': 'ne',
+            'Sindhi': 'sd',
+            'Sinhala': 'si',
+            'Farsi': 'fa',
+            'Afrikaans': 'af',
+            'Arabic': 'ar',
+            'French': 'fr',
+            'German': 'de',
+            'Italian': 'it',
+            'Spanish': 'es',
+            'Dutch': 'nl',
+            'Russian': 'ru',
+            'Chinese': 'zh-CN',
+            'Japanese': 'ja',
+            'Korean': 'ko'
+        }
+
+        self.bg_color = '#489fb5'
+        self.button_color = '#ede7e3'
+        self.text_color = '#000000'
+
+        self.create_widgets()
+
+    def create_widgets(self):
+        self.root.configure(bg='#16697a')
+        self.header_label = Label(self.root, text="Language Translator", font=('Arial Rounded MT Bold', 24),bg='#16697a', fg='#edf2fb')
+        self.header_label.pack(pady=(20, 10))
+
+        self.input_frame = Frame(self.root, bg='#82c0cc')
+        self.input_frame.pack(pady=(0, 20))
+
+        self.output_frame = Frame(self.root, bg=self.bg_color)
+        self.output_frame.pack(pady=(0, 20))
+
+        self.txt1 = Text(self.input_frame, font=('Biome Light', 14), width=40, height=6)
+        self.txt1.grid(row=0, column=0, padx=10, pady=10)
+
+        self.c1 = ttk.Combobox(self.input_frame, values=list(self.languages.keys()), font=('Biome Light', 14), width=15)
+        self.c1.grid(row=1, column=0, padx=10, pady=(0, 10))
+
+        self.txt2 = Text(self.output_frame, font=('Biome Light', 14), width=40, height=6)
+        self.txt2.grid(row=0, column=0, padx=10, pady=10)
+
+        self.c2 = ttk.Combobox(self.output_frame, values=list(self.languages.keys()), font=('Biome Light', 14), width=15)
+        self.c2.grid(row=1, column=0, padx=10, pady=(0, 10))
+
+        self.listen_button = Button(self.root, text="Listen", font=('Biome Light', 14), bg=self.button_color, fg='#000000', command=self.listen)
+        self.listen_button.pack(pady=5)
+
+        self.translate_button = Button(self.root, text="Translate", font=('Biome Light', 14), bg=self.button_color, fg='#000000', command=self.translate_text)
+        self.translate_button.pack(pady=5)
+
+        self.tts_button = Button(self.root, text="Text to Speech", font=('Biome Light', 14), bg=self.button_color, fg='#000000', command=self.text_to_speech)
+        self.tts_button.pack(pady=5)
+
+    def translate_text(self):
+        self.txt2.delete(1.0, END)
+        try:
+            from_language = self.languages[self.c1.get()]
+            to_language = self.languages[self.c2.get()]
+
+            text = self.txt1.get(1.0, END)
+            translated_text = textblob.TextBlob(text).translate(from_lang=from_language, to=to_language)
+            self.txt2.insert(1.0, translated_text)
+
+        except Exception as e:
+            messagebox.showerror("Translator", str(e))
+
+    def text_to_speech(self):
+        text = self.txt2.get(1.0, END)
+        try:
+            tts = gTTS(text=text, lang=self.languages[self.c2.get()])
+            tts.save("output.mp3")
+            os.system("start output.mp3")
+
+        except Exception as e:
+            messagebox.showerror("Text-to-Speech Error", str(e))
+
+    def listen(self):
+        recognizer = sr.Recognizer()
+        microphone_index = 0  # Specify the microphone index
+        with sr.Microphone(device_index=microphone_index) as source:
+            print("Please speak something...")
+            audio = recognizer.listen(source)
+
+            try:
+                print("Recognizing...")
+                text = recognizer.recognize_google(audio, language=self.languages[self.c1.get()])
+                self.txt1.insert(END, text)  # Insert recognized text into the input Text widget
+                print("You said:", text)
+            except sr.UnknownValueError:
+                print("Sorry, could not understand audio.")
+            except sr.RequestError as e:
+                print("Error:", str(e))
+
+if __name__ == "__main__":
+    root = Tk()
+    app = TranslatorApp(root)
+    root.mainloop()
